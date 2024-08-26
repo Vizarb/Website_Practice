@@ -1,0 +1,65 @@
+{
+  "products": [
+    {
+      "id": "c095",
+      "name": "milk",
+      "categoryId": "2",
+      "price": 5.5,
+      "stock": 100
+    },
+    {
+      "id": "206c",
+      "name": "Apple",
+      "categoryId": "1",
+      "price": 0.5,
+      "stock": 100
+    },
+    {
+      "id": "3452",
+      "name": "banana",
+      "categoryId": "1",
+      "price": "1",
+      "stock": 100
+    }
+  ],
+  "categories": [
+    {
+      "id": "1",
+      "name": "Fruits"
+    },
+    {
+      "id": "2",
+      "name": "Dairy"
+    },
+    {
+      "id": "3",
+      "name": "Bakery"
+    }
+  ],
+  "cart": [
+    {
+      "id": "206c",
+      "name": "Apple",
+      "categoryId": "1",
+      "price": "0.5"
+    },
+    {
+      "id": "c095",
+      "name": "milk",
+      "categoryId": "2",
+      "price": "5.5"
+    },
+    {
+      "id": "3452",
+      "name": "banana",
+      "categoryId": "1",
+      "price": "1"
+    },
+    {
+      "id": "3452",
+      "name": "banana",
+      "categoryId": "1",
+      "price": "1"
+    }
+  ]
+}

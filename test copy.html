@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+</head>
+
+<body class="bg-light">
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Supermarket Management</h1>
+
+        <div class="card p-4 mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="itemName" class="form-label">Item Name:</label>
+                    <input id="itemName" class="form-control" placeholder="Enter item name">
+                </div>
+                <div class="col-md-3">
+                    <label for="categoryId" class="form-label">Item Category:</label>
+                    <input id="categoryId" class="form-control" placeholder="Enter category">
+                </div>
+                <div class="col-md-3">
+                    <label for="price" class="form-label">Item Price:</label>
+                    <input id="price" class="form-control" placeholder="Enter price">
+                </div>
+                <div class="col-md-3">
+                    <label for="stock" class="form-label">Item Stock:</label>
+                    <input id="stock" class="form-control" placeholder="Enter stock quantity">
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-primary" onclick="add()">Add to Shop</button>
+            </div>
+        </div>
+
+        <hr>
+
+        <h3 class="mb-3">Shop Items</h3>
+        <div id="displayShop" class="mb-4"></div>
+
+        <div class="p-4 mb-4 bg-info text-white rounded">
+            <strong>Note:</strong> This section has custom padding and background color.
+        </div>
+
+        <h3 class="mb-3">Cart</h3>
+        <div id="displayCart" class="mb-4"></div>
+
+        <div class="text-end">
+            <p id="cartTotalPrice" class="fw-bold fs-4 text-success"></p>
+        </div>
+    </div>
+
+    <script>
+        const SERVER = "http://127.0.0.1:3000/products/";
+        const CARTSERVER = "http://127.0.0.1:3000/cart/";
+
+        const getRandomNumber = () => Math.floor(Math.random() * 1000);
+
+        // Fetch and display shop items
+        const displayShopItems = async () => {
+            try {
+                const res = await axios.get(SERVER);
+                const products = res.data;
+                const displayShop = document.getElementById("displayShop");
+
+                displayShop.innerHTML = products.map(product => `
+                    <div class="card mb-3">
+                        <div class="card-body d-flex align-items-center">
+                            <img src="https://picsum.photos/50/50?random=${getRandomNumber()}" class="rounded me-3" alt="product">
+                            <div>
+                                <h5 class="card-title mb-1">${product.name}</h5>
+                                <p class="card-text mb-1">Category: ${product.categoryId}</p>
+                                <p class="card-text mb-1">Price: $${product.price}</p>
+                                <p class="card-text mb-1">Stock: ${product.stock}</p>
+                            </div>
+                            <div class="ms-auto">
+                                <button class="btn btn-danger btn-sm me-2" onclick="deleteItem('${product.id}', 'product')">Delete</button>
+                                <button class="btn btn-success btn-sm me-2" onclick="addCart('${product.id}', '${product.name}', '${product.categoryId}', '${product.price}')">Add to Cart</button>
+                                <button class="btn btn-warning btn-sm" onclick="upd('${product.id}')">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join("");
+            } catch (error) {
+                console.error('Error fetching shop items:', error);
+            }
+        };
+
+        // Fetch and display cart items
+        const displayCartItems = async () => {
+            try {
+                const res = await axios.get(CARTSERVER);
+                const cartItems = res.data;
+                const displayCart = document.getElementById("displayCart");
+
+                displayCart.innerHTML = cartItems.map(cart => `
+                    <div class="card mb-3">
+                        <div class="card-body d-flex align-items-center">
+                            <img src="https://picsum.photos/50/50?random=1" class="rounded me-3" alt="cart-item">
+                            <div>
+                                <h5 class="card-title mb-1">${cart.name}</h5>
+                                <p class="card-text mb-1">Category: ${cart.categoryId}</p>
+                                <p class="card-text mb-1">Price: $${cart.price}</p>
+                            </div>
+                            <div class="ms-auto">
+                                <button class="btn btn-danger btn-sm" onclick="deleteItem('${cart.id}', 'cart')">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join("");
+                totalPrice(); // Update the total price after displaying cart items
+            } catch (error) {
+                console.error('Error fetching cart items:', error);
+            }
+        };
+
+        // Calculate total price of cart items
+        const totalPrice = async () => {
+            try {
+                const res = await axios.get(CARTSERVER);
+                const cartItems = res.data;
+                const total = cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0);
+                document.getElementById("cartTotalPrice").innerHTML = 'Total Price: $' + total.toFixed(2);
+            } catch (error) {
+                console.error('Error calculating total price:', error);
+            }
+        };
+
+        // Add item to cart
+        const addCart = async (id, name, categoryId, price) => {
+            try {
+                const res = await axios.get(SERVER);
+                const products = res.data;
+                const cartRes = await axios.get(CARTSERVER);
+                const cartItems = cartRes.data;
+
+                const product = products.find(p => p.id === id);
+                const cartItem = cartItems.find(c => c.id === id);
+
+                if (cartItem) {
+                    await axios.put(`${CARTSERVER}${cartItem.id}`, {
+                        ...cartItem,
+                        amount: cartItem.amount + 1
+                    });
+                } else if (product) {
+                    await axios.post(CARTSERVER, {
+                        id: product.id,
+                        name: product.name,
+                        categoryId: product.categoryId,
+                        price: product.price,
+                        amount: 1
+                    });
+                }
+                displayCartItems(); // Update the cart display after adding an item
+            } catch (error) {
+                console.error('Error adding item to cart:', error);
+            }
+        };
+
+        // Add new item to shop
+        const add = async () => {
+            try {
+                await axios.post(SERVER, {
+                    name: document.getElementById('itemName').value,
+                    categoryId: document.getElementById('categoryId').value,
+                    price: document.getElementById('price').value,
+                    stock: document.getElementById('stock').value
+                });
+                displayShopItems(); // Refresh shop items after adding a new item
+            } catch (error) {
+                console.error('Error adding item to shop:', error);
+            }
+        };
+
+        // Delete an item (from cart or shop)
+        const deleteItem = async (id, type) => {
+            const url = type === 'cart' ? CARTSERVER : SERVER;
+            try {
+                await axios.delete(`${url}${id}`);
+                if (type === 'cart') {
+                    displayCartItems(); // Update cart display after deletion
+                } else {
+                    displayShopItems(); // Update shop display after deletion
+                }
+            } catch (error) {
+                console.error(`Error deleting ${type} item:`, error);
+            }
+        };
+
+        // Update an item in the shop
+        const upd = async (id) => {
+            try {
+                await axios.put(`${SERVER}${id}`, {
+                    name: document.getElementById('itemName').value,
+                    categoryId: document.getElementById('categoryId').value,
+                    price: document.getElementById('price').value,
+                    stock: document.getElementById('stock').value
+                });
+                displayShopItems(); // Refresh shop items after update
+            } catch (error) {
+                console.error('Error updating item:', error);
+            }
+        };
+
+        // Initial data fetch
+        (async () => {
+            await displayShopItems();
+            await displayCartItems();
+        })();
+
+    </script>
+</body>
+
+</html>
